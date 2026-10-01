@@ -4,6 +4,7 @@ const CreateRideScreen = () => {
     return (
         <View style = {styles.container}>
             <Text style = {styles.title}>Create Ride</Text>
+
         </View>
     )
 }
