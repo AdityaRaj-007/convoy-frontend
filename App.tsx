@@ -13,15 +13,19 @@ import {
 } from 'react-native-safe-area-context';
 import {NavigationContainer} from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
+import {AuthProvider} from "./src/context/AuthContext";
+import RootNavigator from "./src/navigation/RootNavigator";
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <AppNavigator/>
-      </NavigationContainer>
+        <AuthProvider>
+          <NavigationContainer>
+
+          </NavigationContainer>
+        </AuthProvider>
     </SafeAreaProvider>
   );
 }
