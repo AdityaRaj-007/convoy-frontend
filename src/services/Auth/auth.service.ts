@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {apiRequest} from "../api";
-import {AuthTokens, User} from "../../types/auth";
+import {VerifyOTPResult, User, AuthTokens} from "../../types/auth";
 
 const ACCESS_TOKEN_KEY = 'auth:accessToken';
 const REFRESH_TOKEN_KEY = 'auth:refreshToken';
@@ -13,18 +13,21 @@ export const sendOTP = async(phoneNumber: string) => {
     });
 }
 
-export const verifyOTP = async(phoneNumber: string, otp: string): Promise<AuthTokens> => {
-    const token = await apiRequest<AuthTokens>('/auth/otp/verify', {
+export const verifyOTP = async(phoneNumber: string, otp: string): Promise<VerifyOTPResult> => {
+    const result = await apiRequest<VerifyOTPResult>('/auth/otp/verify', {
         method: 'POST',
         body: {phoneNumber, otp}
     });
 
-    await AsyncStorage.multiSet([
-        [ACCESS_TOKEN_KEY, token.accessToken],
-        [REFRESH_TOKEN_KEY, token.refreshToken]
-    ]);
+    if('accessToken' in result) {
+        await AsyncStorage.setMany({
+            [ACCESS_TOKEN_KEY]: token.accessToken,
+            [REFRESH_TOKEN_KEY]: token.refreshToken
+        });
+    }
 
-    return token;
+
+    return result;
 }
 
 export const saveUser = async(user:User) => {
@@ -32,10 +35,18 @@ export const saveUser = async(user:User) => {
 }
 
 export const getStoredTokens = async(): Promise<AuthTokens | null> => {
-    const values = await AsyncStorage.multiGet([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+    console.log('getStoredTokens: started');
+      console.log('AsyncStorage:', AsyncStorage);
+      console.log('AsyncStorage.multiGet:', AsyncStorage.multiGet);
+    const values = await AsyncStorage.getMany([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
 
-    const accessToken = values[0][1];
-    const refreshToken = values[1][1];
+    console.log('getMany returned:', values);
+      console.log('getMany type:', typeof values);
+    const accessToken = values[ACCESS_TOKEN_KEY];
+    const refreshToken = values[REFRESH_TOKEN_KEY];
+
+    console.log('accessToken : ', accessToken);
+    console.log('refreshToken : ', refreshToken);
 
     if(!accessToken || !refreshToken) {
         return null;
@@ -47,6 +58,7 @@ export const getStoredTokens = async(): Promise<AuthTokens | null> => {
 export const getStoredUser = async (): Promise<User | null> => {
     const value = await AsyncStorage.getItem(USER_KEY);
 
+    console.log("value : ", value);
     if(!value) {
         return null;
     }
@@ -55,5 +67,16 @@ export const getStoredUser = async (): Promise<User | null> => {
 }
 
 export const logout = async() => {
-    await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
+    await AsyncStorage.removeMany([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY]);
+}
+
+export const registerUser = async (name: string, verificationToken:string):Promise<AuthTokens> => {
+    const tokens = await apiRequest<AuthTokens>('/auth/register', {method: 'POST', body: {name, verificationToken}});
+
+    await AsyncStorage.setMany({
+        [ACCESS_TOKEN_KEY]: token.accessToken,
+        [REFRESH_TOKEN_KEY]: token.refreshToken
+    });
+
+    return tokens;
 }

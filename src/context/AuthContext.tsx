@@ -1,4 +1,4 @@
-import React, {ReactNode, createContext, useState, useEffect} from "react";
+import React, {ReactNode, createContext, useState, useEffect, useContext} from "react";
 import {AuthTokens, User} from "../types/auth";
 import {getStoredTokens, getStoredUser, logout as logoutService} from "../services/Auth/auth.service";
 
@@ -7,6 +7,7 @@ type AuthContextValue = {
     tokens: AuthTokens | null;
     isLoading: boolean;
     isAuthenticated: boolean;
+    authenticate: (tokens: AuthTokens) => void;
     logout: () => Promise<void>
 }
 
@@ -16,7 +17,7 @@ type AuthProviderProps = {
     children: ReactNode;
 }
 
-const AuthProvider = ({children}: AuthProviderProps) => {
+export const AuthProvider = ({children}: AuthProviderProps) => {
     const [user, setUser] = useState<User | null>(null);
     const [tokens, setTokens] = useState<AuthTokens | null> (null);
     const [isLoading, setIsLoading] = useState(true);
@@ -27,10 +28,12 @@ const AuthProvider = ({children}: AuthProviderProps) => {
 
     const restoreAuthState = async () => {
         try {
-            const [storedTokens, storedUser] = await Promise.all([getStoredTokens(), getStoredUser()]);
+            console.log('getStoredTokens:', getStoredTokens);
+            console.log('getStoredUser:', getStoredUser);
+            const [storedTokens, storedUser] = await Promise.all([getStoredTokens(), getStoredUser()])
 
-            setTokens(storedTokens);
-            setUser(storedUser);
+            console.log('storedTokens : ', storedTokens);
+            console.log('storedUser : ', storedUser);
         } catch(error) {
             console.error('Failed to restore authentication state: ', error);
         } finally {
@@ -45,11 +48,16 @@ const AuthProvider = ({children}: AuthProviderProps) => {
         setUser(null);
     }
 
+    const authenticate = (tokens: AuthTokens) => {
+        setTokens(tokens);
+    }
+
     const value: AuthContextValue = {
         user,
         tokens,
         isLoading,
         isAuthenticated: tokens !== null,
+        authenticate,
         logout
     }
     return (

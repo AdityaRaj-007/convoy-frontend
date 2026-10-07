@@ -23,7 +23,7 @@ function App() {
     <SafeAreaProvider>
         <AuthProvider>
           <NavigationContainer>
-
+            <RootNavigator/>
           </NavigationContainer>
         </AuthProvider>
     </SafeAreaProvider>

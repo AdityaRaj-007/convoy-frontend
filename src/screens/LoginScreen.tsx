@@ -15,18 +15,20 @@ const LoginScreen = () => {
         }
 
         try {
-            isLoading(true);
+            setIsLoading(true);
+            console.log("sendOTP : ", sendOTP);
 
             await sendOTP(phoneNumber.trim());
 
             navigation.navigate('OTP', {phoneNumber: phoneNumber.trim()});
         }catch(err) {
+            console.log("Error : ", err);
             Alert.alert('Unable to send OTP',
                 err instanceof Error ? err.message :
                     'Something went wrong.'
             );
         }finally {
-            isLoading(false);
+            setIsLoading(false);
         }
     }
 

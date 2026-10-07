@@ -1,6 +1,8 @@
 import React , {useState} from 'react';
 import {verifyOTP} from "../services/Auth/auth.service";
 import {Alert, View, Text, TextInput, Button, StyleSheet} from 'react-native';
+import {useAuth} from "../context/AuthContext";
+import {useNavigation} from "@react-navigation/native";
 
 type Props = {
     route: {
@@ -11,23 +13,33 @@ type Props = {
 }
 const OTPScreen = ({route}: Props) => {
     const {phoneNumber} = route.params;
+    const {authenticate} = useAuth();
+    const navigation = useNavigation();
 
     const [otp, setOtp] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleVerifyOTP = async () => {
         try {
-            isLoading(true);
+            setIsLoading(true);
 
-            await verifyOTP(phoneNumber, otp);
+            const result = await verifyOTP(phoneNumber, otp);
 
-            Alert.alert('Success', 'OTP verified.');
+//          Alert.alert('Success', 'OTP verified.');
+
+            if('isNewUser' in result) {
+                navigation.navigate('Register', {verificationToken: result.verificationToken});
+            }
+
+            authenticate(result);
+
         } catch(err) {
+            console.log("Verification error : ", err);
             Alert.alert('Verification failed',
                     err instanceof Error ? err.message: 'Something went wrong'
             );
         }finally {
-            isLoading(false);
+            setIsLoading(false);
         }
     }
 
@@ -57,3 +69,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     }
 })
+
+export default OTPScreen;

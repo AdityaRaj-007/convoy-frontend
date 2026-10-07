@@ -11,6 +11,8 @@ export type AuthTokens = {
 
 export type AuthState = {
     user: User | null;
-    tokens: AuthTokens ||| null;
+    tokens: AuthTokens | null;
     isLoading: boolean;
 }
+
+export type VerifyOTPResult = AuthTokens | {isNewUser: true; verificationToken: string};
