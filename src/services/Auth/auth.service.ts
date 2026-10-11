@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {apiRequest} from "../api";
-import {VerifyOTPResult, User, AuthTokens} from "../../types/auth";
+import {VerifyOTPResult, User, AuthTokens, ApiResponse} from "../../types/auth";
 
 const ACCESS_TOKEN_KEY = 'auth:accessToken';
 const REFRESH_TOKEN_KEY = 'auth:refreshToken';
@@ -14,10 +14,16 @@ export const sendOTP = async(phoneNumber: string) => {
 }
 
 export const verifyOTP = async(phoneNumber: string, otp: string): Promise<VerifyOTPResult> => {
-    const result = await apiRequest<VerifyOTPResult>('/auth/otp/verify', {
+    const response = await apiRequest<VerifyOTPResult>('/auth/otp/verify', {
         method: 'POST',
         body: {phoneNumber, otp}
     });
+
+    if(!response.success) {
+        throw new Error(response.error ?? 'OTP verification failed');
+    }
+
+    const result = response.data;
 
     if('accessToken' in result) {
         await AsyncStorage.setMany({
@@ -71,12 +77,27 @@ export const logout = async() => {
 }
 
 export const registerUser = async (name: string, verificationToken:string):Promise<AuthTokens> => {
-    const tokens = await apiRequest<AuthTokens>('/auth/register', {method: 'POST', body: {name, verificationToken}});
+    const response = await apiRequest<AuthTokens>('/auth/register', {method: 'POST', body: {name, verificationToken}});
+    console.log("Response from api : ", response);
 
     await AsyncStorage.setMany({
-        [ACCESS_TOKEN_KEY]: token.accessToken,
-        [REFRESH_TOKEN_KEY]: token.refreshToken
+        [ACCESS_TOKEN_KEY]: response.data.accessToken,
+        [REFRESH_TOKEN_KEY]: response.data.refreshToken
     });
 
-    return tokens;
+    return response.data;
+}
+
+export const getCurrentUser = async(accessToken: string): Promise<User> => {
+    const response = await apiRequest<ApiResponse<User>>("/auth/me", {
+        method: 'GET',
+        token: accessToken,
+        retryOnUnauthorized: true,
+    });
+
+    if(!response.success || !response.data) {
+        throw new Error(response.error ?? 'Failed to fetch current user.')
+    }
+
+    return response.data;
 }

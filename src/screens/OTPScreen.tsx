@@ -26,9 +26,12 @@ const OTPScreen = ({route}: Props) => {
             const result = await verifyOTP(phoneNumber, otp);
 
 //          Alert.alert('Success', 'OTP verified.');
-
-            if('isNewUser' in result) {
-                navigation.navigate('Register', {verificationToken: result.verificationToken});
+            console.log("Result from verifyOTP : ", result);
+            console.log("Data from result : ", result.data);
+            console.log("Is a new user : ", result.data.isNewUser);
+            if(result && result.data && result.data.isNewUser) {
+                navigation.navigate('Register', {verificationToken: result.data.verificationToken});
+                return;
             }
 
             authenticate(result);
@@ -44,7 +47,7 @@ const OTPScreen = ({route}: Props) => {
     }
 
     return (
-        <View>
+        <View style = {styles.container}>
             <Text>Enter OTP</Text>
             <Text> OTP sent to {phoneNumber}</Text>
 

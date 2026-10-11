@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Text, TextInput, Button, StyleSheet} from 'react-native';
+import {Alert, View, Text, TextInput, Button, StyleSheet} from 'react-native';
 import {useAuth} from "../context/AuthContext";
 import {registerUser} from "../services/Auth/auth.service";
 
@@ -29,7 +29,7 @@ const RegisterScreen = ({route}: Props) => {
 
             const tokens = await registerUser(name.trim(), verificationToken);
 
-            authenticate(tokens);
+            await authenticate(tokens);
         } catch(err) {
             Alert.alert('Registration failed', err instanceof Error ? err.message : 'Something went wrong');
         } finally{

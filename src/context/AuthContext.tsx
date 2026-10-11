@@ -1,6 +1,6 @@
 import React, {ReactNode, createContext, useState, useEffect, useContext} from "react";
 import {AuthTokens, User} from "../types/auth";
-import {getStoredTokens, getStoredUser, logout as logoutService} from "../services/Auth/auth.service";
+import {getStoredTokens, saveUser, getCurrentUser, logout as logoutService} from "../services/Auth/auth.service";
 
 type AuthContextValue = {
     user: User | null;
@@ -29,11 +29,24 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
     const restoreAuthState = async () => {
         try {
             console.log('getStoredTokens:', getStoredTokens);
-            console.log('getStoredUser:', getStoredUser);
-            const [storedTokens, storedUser] = await Promise.all([getStoredTokens(), getStoredUser()])
+            console.log('getCurrentUser:', getCurrentUser);
+            const storedTokens = await getStoredTokens();
+
+            if(!storedTokens) {
+                setTokens(null);
+                setUser(null);
+                return;
+            }
+
+            const currentUser = await getCurrentUser(storedTokens.accessToken);
+
+            setTokens(storedTokens);
+            setUser(currentUser);
 
             console.log('storedTokens : ', storedTokens);
-            console.log('storedUser : ', storedUser);
+            console.log('currentUserUser : ', currentUser);
+
+            await saveUser(currentUser);
         } catch(error) {
             console.error('Failed to restore authentication state: ', error);
         } finally {
@@ -48,8 +61,25 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
         setUser(null);
     }
 
-    const authenticate = (tokens: AuthTokens) => {
+    const authenticate = async (tokens: AuthTokens) => {
         setTokens(tokens);
+
+        try {
+            const currentUser = await getCurrentUser(tokens.accessToken);
+
+            console.log("Current user : ", currentUser);
+
+            await AsyncStorage.setMany({
+                [ACCESS_TOKEN_KEY]: tokens.accessToken,
+                [REFRESH_TOKEN_KEY]: tokens.refreshToken
+            });
+            await saveUser(currentUser);
+            setUser(currentUser);
+        } catch(error) {
+            setTokens(null);
+            setUser(null);
+            await logoutService();
+        }
     }
 
     const value: AuthContextValue = {

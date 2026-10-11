@@ -16,3 +16,9 @@ export type AuthState = {
 }
 
 export type VerifyOTPResult = AuthTokens | {isNewUser: true; verificationToken: string};
+
+export type ApiResponse<T> = {
+    success: boolean;
+    data: T;
+    error: string | null;
+}
