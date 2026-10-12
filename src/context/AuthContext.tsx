@@ -1,13 +1,14 @@
-import React, {ReactNode, createContext, useState, useEffect, useContext} from "react";
+import React, {ReactNode, createContext, useState, useEffect, useContext, useCallback} from "react";
 import {AuthTokens, User} from "../types/auth";
-import {getStoredTokens, saveUser, getCurrentUser, logout as logoutService} from "../services/Auth/auth.service";
+import {getStoredTokens, getStoredUser, saveUser, getCurrentUser, logout as logoutService} from "../services/Auth/auth.service";
+import {setSessionExpiredHandler} from "../services/api";
 
 type AuthContextValue = {
     user: User | null;
     tokens: AuthTokens | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    authenticate: (tokens: AuthTokens) => void;
+    authenticate: (tokens: AuthTokens) => Promise<void>;
     logout: () => Promise<void>
 }
 
@@ -22,11 +23,18 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
     const [tokens, setTokens] = useState<AuthTokens | null> (null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        restoreAuthState()
+    const logout = useCallback(async () => {
+        try {
+            await logoutService();
+        } finally {
+            setTokens(null);
+            setUser(null);
+        }
     },[]);
 
-    const restoreAuthState = async () => {
+    const restoreAuthState = useCallback(async () => {
+        let storedTokens:AuthTokens | null = null;
+
         try {
             console.log('getStoredTokens:', getStoredTokens);
             console.log('getCurrentUser:', getCurrentUser);
@@ -40,47 +48,63 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
 
             const currentUser = await getCurrentUser(storedTokens.accessToken);
 
-            setTokens(storedTokens);
+            const latestTokens = await getStoredTokens();
+
+            setTokens(latestTokens ?? storedTokens);
             setUser(currentUser);
 
+            console.log('latestTokens : ', latestTokens);
             console.log('storedTokens : ', storedTokens);
             console.log('currentUserUser : ', currentUser);
 
             await saveUser(currentUser);
         } catch(error) {
             console.error('Failed to restore authentication state: ', error);
+
+            const isSessionExpired = error instanceof Error && (error.message === "SESSION_EXPIRED" || error.message === "NO_REFRESH_TOKEN");
+
+            if(storedTokens && !isSessionExpired) {
+                try {
+                    const cachedUser = await getStoredUser();
+
+                    if(cachedUser) {
+                        setTokens(storedTokens);
+                        setUser(cachedUser);
+                    }
+                } catch(cacheError) {
+                    console.error('Failed to load cached user : ', cacheError);
+                }
+            }
         } finally {
             setIsLoading(false);
         }
-    }
+    }, []);
 
-    const logout = async () => {
-        await logoutService();
+    const authenticate = useCallback(async (tokens: AuthTokens) => {
+        const currentUser = await getCurrentUser(tokens.accessToken);
 
-        setTokens(null);
-        setUser(null);
-    }
+        console.log("Current user : ", currentUser);
 
-    const authenticate = async (tokens: AuthTokens) => {
-        setTokens(tokens);
+        const latestTokens = await getStoredTokens();
+        await saveUser(currentUser);
 
-        try {
-            const currentUser = await getCurrentUser(tokens.accessToken);
+        setTokens(latestTokens ?? tokens);
+        setUser(currentUser);
+    }, []);
 
-            console.log("Current user : ", currentUser);
+    useEffect(() => {
+        setSessionExpiredHandler(() => {
+            void logout().catch(error => {
+                console.error('Failed to clear expired session : ', error);
+            })
+        });
 
-            await AsyncStorage.setMany({
-                [ACCESS_TOKEN_KEY]: tokens.accessToken,
-                [REFRESH_TOKEN_KEY]: tokens.refreshToken
-            });
-            await saveUser(currentUser);
-            setUser(currentUser);
-        } catch(error) {
-            setTokens(null);
-            setUser(null);
-            await logoutService();
-        }
-    }
+        return () => {setSessionExpiredHandler(null)};
+    }, [logout]);
+
+    useEffect(() => {
+        void restoreAuthState();
+    }, [restoreAuthState]);
 
     const value: AuthContextValue = {
         user,

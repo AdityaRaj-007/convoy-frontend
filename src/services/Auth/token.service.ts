@@ -21,9 +21,19 @@ export const refreshAccessToken = async(): Promise<string> => {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({refreshToken}),
-    })
+    });
 
-    const result: ApiResponse<AuthTokens> = await response.json();
+    if(response.status === 401 || response.status === 403) {
+        throw new Error("SESSION_EXPIRED");
+    }
+
+    let result: ApiResponse<AuthTokens>
+
+    try {
+        result = await response.json();
+    } catch {
+        throw new Error('INVALID_REFRESH_TOKEN');
+    }
     console.log("Response.ok : ", response.ok);
     console.log("Response from /refresh : ", result);
 

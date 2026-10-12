@@ -16,7 +16,8 @@ export const sendOTP = async(phoneNumber: string) => {
 export const verifyOTP = async(phoneNumber: string, otp: string): Promise<VerifyOTPResult> => {
     const response = await apiRequest<VerifyOTPResult>('/auth/otp/verify', {
         method: 'POST',
-        body: {phoneNumber, otp}
+        body: {phoneNumber, otp},
+        retryOnUnauthorized: true
     });
 
     if(!response.success) {

@@ -27,10 +27,9 @@ const OTPScreen = ({route}: Props) => {
 
 //          Alert.alert('Success', 'OTP verified.');
             console.log("Result from verifyOTP : ", result);
-            console.log("Data from result : ", result.data);
-            console.log("Is a new user : ", result.data.isNewUser);
-            if(result && result.data && result.data.isNewUser) {
-                navigation.navigate('Register', {verificationToken: result.data.verificationToken});
+            console.log("Is a new user : ", result.isNewUser);
+            if(result && result.isNewUser) {
+                navigation.navigate('Register', {verificationToken: result.verificationToken});
                 return;
             }
 

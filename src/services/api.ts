@@ -7,8 +7,28 @@ type RequestOptions = {
     token?: string;
     retryOnUnauthorized?: boolean;
 }
+type SessionExpiredHandler = () => void;
 
 let refreshPromise: Promise<string> | null = null;
+let sessionExpiredHandler: sessionExpiredHandler | null = null;
+let sessionExpiredHandled = false;
+
+export const setSessionExpiredHandler = (handler: SessionExpiredHandler | null) => {
+    sessionExpiredHandler = handler;
+
+    if(handler) {
+        sessionExpiredHandled = false;
+    }
+}
+
+const notifySessionExpired = () => {
+    if(sessionExpiredHandled) {
+        return;
+    }
+
+    sessionExpiredHandled = true;
+    sessionExpiredHandler?.();
+}
 
 export const apiRequest = async<T>(path:string, options: RequestOptions = {}): Promise<T> => {
     const makeRequest = async (token?: string): Promise<Response> => {
@@ -28,8 +48,23 @@ export const apiRequest = async<T>(path:string, options: RequestOptions = {}): P
         if(!refreshPromise) {
             refreshPromise = refreshAccessToken().finally(() => {refreshPromise = null});
         }
-        const newAccessToken = await refreshPromise;
+        let newAccessToken: string;
+
+        try {
+            newAccessToken = await refreshPromise;
+        } catch(error) {
+            if(error instanceof Error && (error.message === 'SESSION_EXPIRED' || error.message === "NO_REFRESH_TOKEN")) {
+                notifySessionExpired();
+            }
+
+            throw error;
+        }
         response = await makeRequest(newAccessToken);
+
+        if(response.status === 401) {
+            notifySessionExpired();
+            throw new Error('SESSION_EXPIRED');
+        }
     }
 
     if(!response.ok) {
@@ -38,5 +73,5 @@ export const apiRequest = async<T>(path:string, options: RequestOptions = {}): P
         throw new Error(message || `Request failed with status ${response.status}`)
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
 }
