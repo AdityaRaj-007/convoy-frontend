@@ -10,7 +10,7 @@ type RequestOptions = {
 type SessionExpiredHandler = () => void;
 
 let refreshPromise: Promise<string> | null = null;
-let sessionExpiredHandler: sessionExpiredHandler | null = null;
+let sessionExpiredHandler: SessionExpiredHandler | null = null;
 let sessionExpiredHandled = false;
 
 export const setSessionExpiredHandler = (handler: SessionExpiredHandler | null) => {
