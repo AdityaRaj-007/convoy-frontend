@@ -1,4 +1,4 @@
-import {refreshAccessToken} from "./Auth/token.service";
+import {refreshAccessToken} from "./token.service";
 import {API_BASE_URL} from "../config/api";
 
 type RequestOptions = {

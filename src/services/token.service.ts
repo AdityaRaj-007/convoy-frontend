@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getStoredTokens} from "./auth.service";
-import {API_BASE_URL} from "../../config/api";
-import {ApiResponse, AuthTokens} from "../../types/auth";
+import {getStoredTokens} from "./Auth/auth.service";
+import {API_BASE_URL} from "../config/api";
+import {ApiResponse, AuthTokens} from "../types/auth";
 
 const ACCESS_TOKEN_KEY = 'auth:accessToken';
 const REFRESH_TOKEN_KEY = 'auth:refreshToken';

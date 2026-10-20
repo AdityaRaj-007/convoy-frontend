@@ -11,6 +11,9 @@ import {
 } from 'react-native';
 import MapView, {Marker, PROVIDER_GOOGLE, Region} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {MainStackParamList} from "../navigation/MainNavigator";
 
 const DEFAULT_REGION: Region = {
   latitude: 20.5937,
@@ -26,6 +29,8 @@ const HomeScreen = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
+
+    const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
 
   const requestLocationPermission = async (): Promise<boolean> => {
     if (Platform.OS !== 'android') {
@@ -114,10 +119,7 @@ const HomeScreen = () => {
         <Pressable
           style={styles.createRideButton}
           onPress={() =>
-            Alert.alert(
-              'Create a ride',
-              'We will connect this button to your ride creation flow next.',
-            )
+            navigation.navigate('DestinationPicker', {initialRegion: region})
           }
         >
           <Text style={styles.createRideButtonText}>+ Create a Ride</Text>
