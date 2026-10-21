@@ -33,7 +33,13 @@ const MainNavigator = () => {
                     />
                 )}
             </Stack.Screen>
-            <Stack.Screen name="CreateRide" component={CreateRideScreen} options={{title: "Create Ride"}}/>
+            <Stack.Screen name="CreateRide" options={{title: "Create Ride"}}>
+                {({navigation, route}) => (
+                    <CreateRideScreen
+                        destination={route.params.destination}
+                    />
+                )}
+            </Stack.Screen>
         </Stack.Navigator>
     )
 }

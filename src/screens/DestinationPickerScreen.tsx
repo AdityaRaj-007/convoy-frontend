@@ -275,9 +275,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
-    absoluteFill: {
-        ...StyleSheet.absoluteFillObject,
-    },
     searchContainer: {
         position: 'absolute',
         top: 12,

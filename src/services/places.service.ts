@@ -48,7 +48,7 @@ export const searchPlaces = async(input: string, sessionToken?: string): Promise
 
 export const fetchPlaceDetails = async (
     placeId: string,
-     sessionToken?: string
+    sessionToken?: string
 ): Promise<PlaceDetails> => {
     const token = await getAccessToken();
 
