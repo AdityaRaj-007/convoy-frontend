@@ -1,17 +1,20 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, Pressable, TextInput, Keyboard, Alert} from 'react-native';
 import {Destination} from "../types/destination";
+import {createRide} from "../services/ride.service";
+import {RideDetails} from "../types/rides";
 
 type Props = {
-    destination: Destination
+    destination: Destination;
+    onConfirm: (rideDetails: RideDetails) => void;
 }
 
-const CreateRideScreen = ({destination}: Props) => {
+const CreateRideScreen = ({destination, onConfirm}: Props) => {
 
     const [rideName, setRideName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
-    const handleCreateRide = () => {
+    const handleCreateRide = async () => {
         console.log("Destination : " + destination.name);
         Keyboard.dismiss();
 
@@ -22,8 +25,16 @@ const CreateRideScreen = ({destination}: Props) => {
 
         try {
             setIsCreating(true);
+            console.log("Create Ride Function : " + createRide);
 
+            const dstination = {...destination, lat: destination.latitude, long: destination.longitude};
 
+            console.log("Destination : " + dstination);
+
+            const rideData = await createRide({destination: dstination, rideName});
+            console.log("Ride data : " + rideData);
+
+            onConfirm(rideData);
         }catch(error) {
             console.error('Failed to create ride : ', error);
             Alert.alert('Error', 'Unable to create the ride. Please try again.');
@@ -56,7 +67,10 @@ const CreateRideScreen = ({destination}: Props) => {
                 </View>
             </View>
 
-            <Pressable style={[styles.createRideButton, isCreating && styles.disabledButton]}>
+            <Pressable
+                style={[styles.createRideButton, isCreating && styles.disabledButton]}
+                onPress={handleCreateRide}
+            >
                 <Text style={styles.createRideButtonText}>Create Ride</Text>
             </Pressable>
         </View>

@@ -6,6 +6,8 @@ import CreateRideScreen from "../screens/CreateRideScreen";
 import {Region} from 'react-native-apps';
 import {Destination} from "../types/destination";
 import DestinationPickerScreen from "../screens/DestinationPickerScreen";
+import {RideDetails} from "../types/rides";
+import RideDetailScreen from "../screens/RideDetailScreen"
 
 export type MainStackParamsList = {
     Home: undefined;
@@ -14,6 +16,9 @@ export type MainStackParamsList = {
     }
     CreateRide: {
         destination?: Destination;
+    }
+    RideDetail: {
+        rideDetails?: RideDetails;
     }
 };
 
@@ -37,6 +42,16 @@ const MainNavigator = () => {
                 {({navigation, route}) => (
                     <CreateRideScreen
                         destination={route.params.destination}
+                        onConfirm = {rideDetails => {
+                            navigation.navigate('RideDetail', {rideDetails})
+                        }}
+                    />
+                )}
+            </Stack.Screen>
+            <Stack.Screen name="RideDetail" options={{title: 'Ride Detail'}}>
+                {({navigation, route}) => (
+                    <RideDetailScreen
+                        rideDetails = {route.params.rideDetails}
                     />
                 )}
             </Stack.Screen>

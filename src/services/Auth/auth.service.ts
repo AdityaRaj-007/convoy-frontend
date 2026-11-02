@@ -28,8 +28,8 @@ export const verifyOTP = async(phoneNumber: string, otp: string): Promise<Verify
 
     if('accessToken' in result) {
         await AsyncStorage.setMany({
-            [ACCESS_TOKEN_KEY]: token.accessToken,
-            [REFRESH_TOKEN_KEY]: token.refreshToken
+            [ACCESS_TOKEN_KEY]: result.accessToken,
+            [REFRESH_TOKEN_KEY]: result.refreshToken
         });
     }
 
@@ -101,4 +101,12 @@ export const getCurrentUser = async(accessToken: string): Promise<User> => {
     }
 
     return response.data;
+}
+
+export const setCurrentRideOwner = async (createdBy: string) => {
+    const user = getCurrentUser();
+
+    user.rideOwner = user.id === createdBy;
+
+    await saveUser(user);
 }
